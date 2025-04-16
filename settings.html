@@ -1,0 +1,345 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-person-circle me-2"></i>User Settings
+                </h5>
+            </div>
+            <div class="card-body">
+                <form id="userSettingsForm">
+                    <div class="mb-3">
+                        <label for="userName" class="form-label">Name</label>
+                        <input type="text" class="form-control" id="userName" value="{{ user.name }}" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label for="userEmail" class="form-label">Email</label>
+                        <input type="email" class="form-control" id="userEmail" value="{{ user.email }}" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label for="notificationEmail" class="form-label">Notification Email</label>
+                        <input type="email" class="form-control" id="notificationEmail" placeholder="Enter email for notifications">
+                    </div>
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="emailNotifications">
+                        <label class="form-check-label" for="emailNotifications">Receive email notifications</label>
+                    </div>
+                    <button type="button" class="btn btn-primary" id="saveUserSettingsBtn">Save Settings</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-shield-check me-2"></i>Risk Management Settings
+                </h5>
+            </div>
+            <div class="card-body">
+                <form id="riskSettingsForm">
+                    <div class="mb-3">
+                        <label for="portfolioValue" class="form-label">Portfolio Value (USD)</label>
+                        <div class="input-group">
+                            <span class="input-group-text">$</span>
+                            <input type="number" class="form-control" id="portfolioValue" min="0" step="100" placeholder="Enter your total portfolio value">
+                        </div>
+                        <div class="form-text">This helps calculate appropriate position sizes</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="riskPerTrade" class="form-label">Risk Per Trade (%)</label>
+                        <div class="input-group">
+                            <input type="number" class="form-control" id="riskPerTrade" min="0.1" max="10" step="0.1" value="1">
+                            <span class="input-group-text">%</span>
+                        </div>
+                        <div class="form-text">Maximum percentage of portfolio to risk on a single trade</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="maxPortfolioExposure" class="form-label">Maximum ETH Exposure (%)</label>
+                        <div class="input-group">
+                            <input type="number" class="form-control" id="maxPortfolioExposure" min="1" max="100" step="1" value="20">
+                            <span class="input-group-text">%</span>
+                        </div>
+                        <div class="form-text">Maximum percentage of portfolio to allocate to ETH</div>
+                    </div>
+                    <button type="button" class="btn btn-primary" id="saveRiskSettingsBtn">Save Settings</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-graph-up me-2"></i>Analysis Settings
+                </h5>
+            </div>
+            <div class="card-body">
+                <form id="analysisSettingsForm">
+                    <div class="mb-3">
+                        <label for="analysisFrequency" class="form-label">Analysis Frequency</label>
+                        <select class="form-select" id="analysisFrequency">
+                            <option value="daily">Daily</option>
+                            <option value="weekly" selected>Weekly</option>
+                            <option value="monthly">Monthly</option>
+                        </select>
+                        <div class="form-text">How often to run automated ETH analysis</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="preferredTimeframe" class="form-label">Preferred Timeframe</label>
+                        <select class="form-select" id="preferredTimeframe">
+                            <option value="short">Short-term (Days)</option>
+                            <option value="medium" selected>Medium-term (Weeks)</option>
+                            <option value="long">Long-term (Months)</option>
+                        </select>
+                        <div class="form-text">Trading timeframe for analysis recommendations</div>
+                    </div>
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="autoTrading" disabled>
+                        <label class="form-check-label" for="autoTrading">Enable automated trading (Coming soon)</label>
+                    </div>
+                    <button type="button" class="btn btn-primary" id="saveAnalysisSettingsBtn">Save Settings</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-palette me-2"></i>Display Settings
+                </h5>
+            </div>
+            <div class="card-body">
+                <form id="displaySettingsForm">
+                    <div class="mb-3">
+                        <label class="form-label">Theme</label>
+                        <div class="btn-group w-100" role="group">
+                            <input type="radio" class="btn-check" name="theme" id="themeLight" value="light" checked>
+                            <label class="btn btn-outline-primary" for="themeLight">Light</label>
+                            <input type="radio" class="btn-check" name="theme" id="themeDark" value="dark">
+                            <label class="btn btn-outline-primary" for="themeDark">Dark</label>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="defaultCurrency" class="form-label">Default Currency</label>
+                        <select class="form-select" id="defaultCurrency">
+                            <option value="USD" selected>USD</option>
+                            <option value="EUR">EUR</option>
+                            <option value="GBP">GBP</option>
+                            <option value="JPY">JPY</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="decimalPrecision" class="form-label">Decimal Precision</label>
+                        <select class="form-select" id="decimalPrecision">
+                            <option value="2" selected>2 decimal places</option>
+                            <option value="4">4 decimal places</option>
+                            <option value="6">6 decimal places</option>
+                        </select>
+                    </div>
+                    <button type="button" class="btn btn-primary" id="saveDisplaySettingsBtn">Save Settings</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-danger text-white">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-exclamation-triangle me-2"></i>Danger Zone
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Reset Dashboard</h6>
+                        <p>This will reset all dashboard settings to default values.</p>
+                        <button type="button" class="btn btn-outline-danger" id="resetDashboardBtn">
+                            <i class="bi bi-arrow-counterclockwise me-2"></i>Reset Dashboard
+                        </button>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Clear Trade History</h6>
+                        <p>This will delete all recorded trades. This action cannot be undone.</p>
+                        <button type="button" class="btn btn-outline-danger" id="clearTradesBtn">
+                            <i class="bi bi-trash me-2"></i>Clear Trade History
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Load saved settings
+        loadSettings();
+        
+        // Theme toggle
+        const themeLightRadio = document.getElementById('themeLight');
+        const themeDarkRadio = document.getElementById('themeDark');
+        
+        if (themeLightRadio && themeDarkRadio) {
+            if (document.body.classList.contains('dark-mode')) {
+                themeDarkRadio.checked = true;
+            } else {
+                themeLightRadio.checked = true;
+            }
+            
+            themeLightRadio.addEventListener('change', function() {
+                if (this.checked) {
+                    document.body.classList.remove('dark-mode');
+                    localStorage.setItem('darkMode', 'false');
+                }
+            });
+            
+            themeDarkRadio.addEventListener('change', function() {
+                if (this.checked) {
+                    document.body.classList.add('dark-mode');
+                    localStorage.setItem('darkMode', 'true');
+                }
+            });
+        }
+        
+        // Save buttons
+        const saveUserSettingsBtn = document.getElementById('saveUserSettingsBtn');
+        if (saveUserSettingsBtn) {
+            saveUserSettingsBtn.addEventListener('click', function() {
+                saveUserSettings();
+            });
+        }
+        
+        const saveRiskSettingsBtn = document.getElementById('saveRiskSettingsBtn');
+        if (saveRiskSettingsBtn) {
+            saveRiskSettingsBtn.addEventListener('click', function() {
+                saveRiskSettings();
+            });
+        }
+        
+        const saveAnalysisSettingsBtn = document.getElementById('saveAnalysisSettingsBtn');
+        if (saveAnalysisSettingsBtn) {
+            saveAnalysisSettingsBtn.addEventListener('click', function() {
+                saveAnalysisSettings();
+            });
+        }
+        
+        const saveDisplaySettingsBtn = document.getElementById('saveDisplaySettingsBtn');
+        if (saveDisplaySettingsBtn) {
+            saveDisplaySettingsBtn.addEventListener('click', function() {
+                saveDisplaySettings();
+            });
+        }
+        
+        // Danger zone buttons
+        const resetDashboardBtn = document.getElementById('resetDashboardBtn');
+        if (resetDashboardBtn) {
+            resetDashboardBtn.addEventListener('click', function() {
+                if (confirm('Are you sure you want to reset all dashboard settings? This cannot be undone.')) {
+                    resetDashboard();
+                }
+            });
+        }
+        
+        const clearTradesBtn = document.getElementById('clearTradesBtn');
+        if (clearTradesBtn) {
+            clearTradesBtn.addEventListener('click', function() {
+                if (confirm('Are you sure you want to clear all trade history? This action cannot be undone.')) {
+                    clearTradeHistory();
+                }
+            });
+        }
+    });
+    
+    function loadSettings() {
+        // Load settings from localStorage
+        const notificationEmail = localStorage.getItem('notificationEmail');
+        const emailNotifications = localStorage.getItem('emailNotifications') === 'true';
+        const portfolioValue = localStorage.getItem('portfolioValue');
+        const riskPerTrade = localStorage.getItem('riskPerTrade');
+        const maxPortfolioExposure = localStorage.getItem('maxPortfolioExposure');
+        const analysisFrequency = localStorage.getItem('analysisFrequency');
+        const preferredTimeframe = localStorage.getItem('preferredTimeframe');
+        const defaultCurrency = localStorage.getItem('defaultCurrency');
+        const decimalPrecision = localStorage.getItem('decimalPrecision');
+        
+        // Set form values if they exist
+        if (notificationEmail) {
+            document.getElementById('notificationEmail').value = notificationEmail;
+        }
+        
+        if (emailNotifications) {
+            document.getElementById('emailNotifications').checked = emailNotifications;
+        }
+        
+        if (portfolioValue) {
+            document.getElementById('portfolioValue').value = portfolioValue;
+        }
+        
+        if (riskPerTrade) {
+            document.getElementById('riskPerTrade').value = riskPerTrade;
+        }
+        
+        if (maxPortfolioExposure) {
+            document.getElementById('maxPortfolioExposure').value = maxPortfolioExposure;
+        }
+        
+        if (analysisFrequency) {
+            document.getElementById('analysisFrequency').value = analysisFrequency;
+        }
+        
+        if (preferredTimeframe) {
+            document.getElementById('preferredTimeframe').value = preferredTimeframe;
+        }
+        
+        if (defaultCurrency) {
+            document.getElementById('defaultCurrency').value = defaultCurrency;
+        }
+        
+        if (decimalPrecision) {
+            document.getElementById('decimalPrecision').value = decimalPrecision;
+        }
+    }
+    
+    function saveUserSettings() {
+        const notificationEmail = document.getElementById('notificationEmail').value;
+        const emailNotifications = document.getElementById('emailNotifications').checked;
+        
+        localStorage.setItem('notificationEmail', notificationEmail);
+        localStorage.setItem('emailNotifications', emailNotifications);
+        
+        // Save to server (would be implemented in a real app)
+        showToast('User settings saved successfully');
+    }
+    
+    function saveRiskSettings() {
+        const portfolioValue = document.getElementById('portfolioValue').value;
+        const riskPerTrade = document.getElementById('riskPerTrade').value;
+        const maxPortfolioExposure = document.getElementById('maxPortfolioExposure').value;
+        
+        localStorage.setItem('portfolioValue', portfolioValue);
+        localStorage.setItem('riskPerTrade', riskPerTrade);
+        localStorage.setItem('maxPortfolioExposure', maxPortfolioExposure);
+        
+        // Save to server (would be implemented in a real app)
+        showToast('Risk management settings saved successfully');
+    }
+    
+    function saveAnalysisSettings() {
+        const analysisFrequency = document.getElementById('analysisFrequency').value;
+        const preferredTimeframe = document.getElementById('preferredTimeframe').v
+(Content truncated due to size limit. Use line ranges to read in chunks)

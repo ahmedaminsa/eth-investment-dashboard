@@ -1,0 +1,296 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-graph-up me-2"></i>Performance Tracking
+                </h5>
+                <button class="btn btn-sm btn-light" data-bs-toggle="modal" data-bs-target="#recordTradeModal">
+                    <i class="bi bi-plus-circle me-1"></i>Record Trade
+                </button>
+            </div>
+            <div class="card-body">
+                {% if trades and trades|length > 0 %}
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <div class="card bg-light">
+                            <div class="card-body text-center">
+                                <h6 class="card-title">Total Trades</h6>
+                                <h3>{{ trades|length }}</h3>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-light">
+                            <div class="card-body text-center">
+                                <h6 class="card-title">ETH Holdings</h6>
+                                {% set eth_balance = 0 %}
+                                {% for trade in trades %}
+                                    {% if trade.type|lower == "buy" %}
+                                        {% set eth_balance = eth_balance + trade.amount %}
+                                    {% else %}
+                                        {% set eth_balance = eth_balance - trade.amount %}
+                                    {% endif %}
+                                {% endfor %}
+                                <h3>{{ "%.4f"|format(eth_balance) }}</h3>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-light">
+                            <div class="card-body text-center">
+                                <h6 class="card-title">Current Value</h6>
+                                <h3>${{ "%.2f"|format(eth_balance * current_price) }}</h3>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-light">
+                            <div class="card-body text-center">
+                                <h6 class="card-title">Current Price</h6>
+                                <h3>${{ "%.2f"|format(current_price) }}</h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <canvas id="holdingsChart" height="300"></canvas>
+                    </div>
+                    <div class="col-md-6">
+                        <canvas id="valueChart" height="300"></canvas>
+                    </div>
+                </div>
+
+                <h5 class="mb-3">Trade History</h5>
+                <div class="table-responsive">
+                    <table class="table table-hover" id="tradesTable">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Type</th>
+                                <th>Price</th>
+                                <th>Amount</th>
+                                <th>Value</th>
+                                <th>Notes</th>
+                                <th>Current P/L</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for trade in trades %}
+                            <tr>
+                                <td>{{ trade.date }}</td>
+                                <td>
+                                    {% if trade.type|lower == "buy" %}
+                                    <span class="badge bg-success">Buy</span>
+                                    {% else %}
+                                    <span class="badge bg-danger">Sell</span>
+                                    {% endif %}
+                                </td>
+                                <td>${{ "%.2f"|format(trade.price) }}</td>
+                                <td>{{ "%.4f"|format(trade.amount) }}</td>
+                                <td>${{ "%.2f"|format(trade.price * trade.amount) }}</td>
+                                <td>{{ trade.notes }}</td>
+                                <td>
+                                    {% if trade.type|lower == "buy" %}
+                                        {% set pl = (current_price - trade.price) * trade.amount %}
+                                        {% set pl_percent = (current_price - trade.price) / trade.price * 100 %}
+                                        {% if pl >= 0 %}
+                                        <span class="text-success">
+                                            +${{ "%.2f"|format(pl) }} ({{ "%.1f"|format(pl_percent) }}%)
+                                        </span>
+                                        {% else %}
+                                        <span class="text-danger">
+                                            -${{ "%.2f"|format(pl|abs) }} ({{ "%.1f"|format(pl_percent) }}%)
+                                        </span>
+                                        {% endif %}
+                                    {% else %}
+                                        {% set pl = (trade.price - current_price) * trade.amount %}
+                                        {% set pl_percent = (trade.price - current_price) / trade.price * 100 %}
+                                        {% if pl >= 0 %}
+                                        <span class="text-success">
+                                            +${{ "%.2f"|format(pl) }} ({{ "%.1f"|format(pl_percent) }}%)
+                                        </span>
+                                        {% else %}
+                                        <span class="text-danger">
+                                            -${{ "%.2f"|format(pl|abs) }} ({{ "%.1f"|format(pl_percent) }}%)
+                                        </span>
+                                        {% endif %}
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="bi bi-graph-up display-1 text-muted"></i>
+                    <p class="mt-3">No trade history available</p>
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#recordTradeModal">
+                        <i class="bi bi-plus-circle me-2"></i>Record Your First Trade
+                    </button>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-calculator me-2"></i>Performance Metrics
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if trades and trades|length > 0 %}
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="card bg-light mb-3">
+                            <div class="card-body">
+                                <h6 class="card-title">Total Investment</h6>
+                                {% set total_investment = 0 %}
+                                {% for trade in trades %}
+                                    {% if trade.type|lower == "buy" %}
+                                        {% set total_investment = total_investment + (trade.price * trade.amount) %}
+                                    {% endif %}
+                                {% endfor %}
+                                <h3>${{ "%.2f"|format(total_investment) }}</h3>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card bg-light mb-3">
+                            <div class="card-body">
+                                <h6 class="card-title">Total Realized P/L</h6>
+                                {% set total_realized_pl = 0 %}
+                                {% set buy_trades = {} %}
+                                {% for trade in trades %}
+                                    {% if trade.type|lower == "buy" %}
+                                        {% if trade.date in buy_trades %}
+                                            {% set buy_trades = buy_trades.update({trade.date: buy_trades[trade.date] + (trade.price * trade.amount)}) %}
+                                        {% else %}
+                                            {% set buy_trades = buy_trades.update({trade.date: trade.price * trade.amount}) %}
+                                        {% endif %}
+                                    {% else %}
+                                        {% set total_realized_pl = total_realized_pl + ((trade.price - trade.buy_price) * trade.amount) if trade.buy_price is defined else total_realized_pl %}
+                                    {% endif %}
+                                {% endfor %}
+                                {% if total_realized_pl >= 0 %}
+                                <h3 class="text-success">+${{ "%.2f"|format(total_realized_pl) }}</h3>
+                                {% else %}
+                                <h3 class="text-danger">-${{ "%.2f"|format(total_realized_pl|abs) }}</h3>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card bg-light mb-3">
+                            <div class="card-body">
+                                <h6 class="card-title">Total Unrealized P/L</h6>
+                                {% set total_unrealized_pl = (current_price * eth_balance) - total_investment %}
+                                {% if total_unrealized_pl >= 0 %}
+                                <h3 class="text-success">+${{ "%.2f"|format(total_unrealized_pl) }}</h3>
+                                {% else %}
+                                <h3 class="text-danger">-${{ "%.2f"|format(total_unrealized_pl|abs) }}</h3>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="card bg-light mb-3">
+                            <div class="card-body">
+                                <h6 class="card-title">ROI</h6>
+                                {% set roi = total_unrealized_pl / total_investment * 100 if total_investment > 0 else 0 %}
+                                {% if roi >= 0 %}
+                                <h3 class="text-success">+{{ "%.2f"|format(roi) }}%</h3>
+                                {% else %}
+                                <h3 class="text-danger">{{ "%.2f"|format(roi) }}%</h3>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card bg-light mb-3">
+                            <div class="card-body">
+                                <h6 class="card-title">Average Buy Price</h6>
+                                {% set total_buy_amount = 0 %}
+                                {% set total_buy_value = 0 %}
+                                {% for trade in trades %}
+                                    {% if trade.type|lower == "buy" %}
+                                        {% set total_buy_amount = total_buy_amount + trade.amount %}
+                                        {% set total_buy_value = total_buy_value + (trade.price * trade.amount) %}
+                                    {% endif %}
+                                {% endfor %}
+                                {% set avg_buy_price = total_buy_value / total_buy_amount if total_buy_amount > 0 else 0 %}
+                                <h3>${{ "%.2f"|format(avg_buy_price) }}</h3>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card bg-light mb-3">
+                            <div class="card-body">
+                                <h6 class="card-title">Average Sell Price</h6>
+                                {% set total_sell_amount = 0 %}
+                                {% set total_sell_value = 0 %}
+                                {% for trade in trades %}
+                                    {% if trade.type|lower == "sell" %}
+                                        {% set total_sell_amount = total_sell_amount + trade.amount %}
+                                        {% set total_sell_value = total_sell_value + (trade.price * trade.amount) %}
+                                    {% endif %}
+                                {% endfor %}
+                                {% set avg_sell_price = total_sell_value / total_sell_amount if total_sell_amount > 0 else 0 %}
+                                <h3>${{ "%.2f"|format(avg_sell_price) }}</h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="bi bi-calculator display-1 text-muted"></i>
+                    <p class="mt-3">No performance metrics available</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Record Trade Modal -->
+<div class="modal fade" id="recordTradeModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Record ETH Trade</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="recordTradeForm">
+                    <div class="mb-3">
+                        <label class="form-label">Trade Type</label>
+                        <div class="btn-group w-100" role="group">
+                            <input type="radio" class="btn-check" name="tradeType" id="typeBuy" value="buy" checked>
+                            <label class="btn btn-outline-success" for="typeBuy">Buy</label>
+                            <input type="radio" class="btn-check" name="tradeType" id="typeSell" value="sell">
+                            <label class="btn btn-outline-danger" for="typeSell">Sell</label>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="tradePrice" class="form-label">Price (USD)</label>
+                        <div class="input-group">
+                            <span class="input-group-text">$</span>
+                            <input type="number" class="form-control" id="tradePrice" step="0.01" min="0" required
+                                value="{{ "%.2f"|format(current_price) }}">
+                        </div>
+   
+(Content truncated due to size limit. Use line ranges to read in chunks)

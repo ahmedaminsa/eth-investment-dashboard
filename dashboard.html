@@ -1,0 +1,329 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <!-- ETH Price & Recommendation Card -->
+    <div class="col-md-4 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-currency-exchange me-2"></i>ETH Price & Recommendation
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if analysis and analysis.price_data %}
+                <div class="text-center mb-4">
+                    <h2 class="display-4">${{ "%.2f"|format(analysis.price_data.price) }}</h2>
+                    {% if analysis.price_data.change_24h > 0 %}
+                    <div class="text-success">
+                        <i class="bi bi-arrow-up-circle-fill"></i>
+                        +{{ "%.2f"|format(analysis.price_data.change_24h) }}% (24h)
+                    </div>
+                    {% else %}
+                    <div class="text-danger">
+                        <i class="bi bi-arrow-down-circle-fill"></i>
+                        {{ "%.2f"|format(analysis.price_data.change_24h) }}% (24h)
+                    </div>
+                    {% endif %}
+                    <div class="text-muted small">
+                        Last updated: {{ analysis.timestamp|replace("T", " ")|replace("Z", "")|truncate(16, True, "") }}
+                    </div>
+                </div>
+
+                {% if analysis.recommendation %}
+                <div class="recommendation-box p-3 mb-3 text-center">
+                    {% if analysis.recommendation.recommendation == "STRONG BUY" %}
+                    <div class="recommendation strong-buy">
+                        <i class="bi bi-arrow-up-circle-fill me-2"></i>STRONG BUY
+                    </div>
+                    {% elif analysis.recommendation.recommendation == "BUY" %}
+                    <div class="recommendation buy">
+                        <i class="bi bi-arrow-up-circle me-2"></i>BUY
+                    </div>
+                    {% elif analysis.recommendation.recommendation == "HOLD" %}
+                    <div class="recommendation hold">
+                        <i class="bi bi-dash-circle me-2"></i>HOLD
+                    </div>
+                    {% elif analysis.recommendation.recommendation == "SELL" %}
+                    <div class="recommendation sell">
+                        <i class="bi bi-arrow-down-circle me-2"></i>SELL
+                    </div>
+                    {% elif analysis.recommendation.recommendation == "STRONG SELL" %}
+                    <div class="recommendation strong-sell">
+                        <i class="bi bi-arrow-down-circle-fill me-2"></i>STRONG SELL
+                    </div>
+                    {% else %}
+                    <div class="recommendation">
+                        <i class="bi bi-question-circle me-2"></i>{{ analysis.recommendation.recommendation }}
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="action-box p-3 mb-3">
+                    <h6 class="fw-bold">Recommended Action:</h6>
+                    <p>{{ analysis.recommendation.action }}</p>
+                </div>
+
+                <div class="explanation-box p-3">
+                    <h6 class="fw-bold">Why This Recommendation:</h6>
+                    <ul class="mb-0">
+                        {% for explanation in analysis.recommendation.explanations %}
+                        <li>{{ explanation }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="bi bi-exclamation-triangle display-1 text-warning"></i>
+                    <p class="mt-3">No analysis data available</p>
+                    <button id="triggerAnalysisBtn" class="btn btn-primary mt-2">
+                        <i class="bi bi-play-circle me-2"></i>Run Analysis Now
+                    </button>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Investment Chart Card -->
+    <div class="col-md-4 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-graph-up me-2"></i>Investment Chart
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if price_chart %}
+                <div class="chart-container">
+                    <img src="data:image/png;base64,{{ price_chart }}" class="img-fluid" alt="ETH Price Chart">
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="bi bi-bar-chart display-1 text-muted"></i>
+                    <p class="mt-3">No chart data available</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Risk Management Panel Card -->
+    <div class="col-md-4 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-shield-check me-2"></i>Risk Management
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if analysis and analysis.risk_report %}
+                <div class="mb-4">
+                    <h6 class="fw-bold">Stop-Loss Price:</h6>
+                    {% if analysis.risk_report.stop_loss and analysis.risk_report.stop_loss.recommended_method %}
+                    {% set recommended_method = analysis.risk_report.stop_loss.recommended_method %}
+                    {% if recommended_method in analysis.risk_report.stop_loss.methods %}
+                    {% set stop_price = analysis.risk_report.stop_loss.methods[recommended_method].stop_price %}
+                    <div class="alert alert-danger">
+                        <i class="bi bi-exclamation-triangle me-2"></i>${{ "%.2f"|format(stop_price) }}
+                    </div>
+                    <p class="text-muted small">This is the price at which you should sell to limit potential losses</p>
+                    {% endif %}
+                    {% else %}
+                    <p>No stop-loss data available</p>
+                    {% endif %}
+                </div>
+
+                <div class="mb-4">
+                    <h6 class="fw-bold">Position Sizing:</h6>
+                    {% if analysis.risk_report.position_size %}
+                    <div class="row">
+                        <div class="col-6">
+                            <div class="card bg-light">
+                                <div class="card-body text-center">
+                                    <h3>{{ "%.4f"|format(analysis.risk_report.position_size.position_size_coins) }}</h3>
+                                    <p class="mb-0">ETH</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="card bg-light">
+                                <div class="card-body text-center">
+                                    <h3>${{ "%.2f"|format(analysis.risk_report.position_size.position_size_dollars) }}</h3>
+                                    <p class="mb-0">USD</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <p class="text-muted small mt-2">Recommended position size based on your risk parameters</p>
+                    {% else %}
+                    <p>No position size data available</p>
+                    {% endif %}
+                </div>
+
+                <div>
+                    <h6 class="fw-bold">Take-Profit Targets:</h6>
+                    {% if analysis.risk_report.take_profit and analysis.risk_report.take_profit.targets %}
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Target</th>
+                                    <th>Price</th>
+                                    <th>Profit</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for target in analysis.risk_report.take_profit.targets %}
+                                <tr>
+                                    <td>Target {{ loop.index }}</td>
+                                    <td>${{ "%.2f"|format(target.target_price) }}</td>
+                                    <td>{{ "%.1f"|format(target.profit_percentage * 100) }}%</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p>No take-profit data available</p>
+                    {% endif %}
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="bi bi-shield display-1 text-muted"></i>
+                    <p class="mt-3">No risk management data available</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Technical Analysis Panel Card -->
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-calculator me-2"></i>Technical Analysis
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if analysis and analysis.analysis %}
+                <div class="row">
+                    <!-- RSI -->
+                    <div class="col-md-6 mb-3">
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                <h6 class="card-title">RSI</h6>
+                                <h3 class="mb-0">{{ "%.1f"|format(analysis.analysis.rsi) }}</h3>
+                                {% if analysis.analysis.rsi > 70 %}
+                                <span class="badge bg-danger">Overbought</span>
+                                {% elif analysis.analysis.rsi < 30 %}
+                                <span class="badge bg-success">Oversold</span>
+                                {% else %}
+                                <span class="badge bg-secondary">Neutral</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- MACD -->
+                    <div class="col-md-6 mb-3">
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                <h6 class="card-title">MACD Signal</h6>
+                                {% if analysis.analysis.macd_signal == "bullish" %}
+                                <span class="badge bg-success">Bullish</span>
+                                {% elif analysis.analysis.macd_signal == "bearish" %}
+                                <span class="badge bg-danger">Bearish</span>
+                                {% else %}
+                                <span class="badge bg-secondary">Neutral</span>
+                                {% endif %}
+                                <p class="small text-muted mb-0">
+                                    MACD: {{ "%.2f"|format(analysis.analysis.macd) }}<br>
+                                    Signal: {{ "%.2f"|format(analysis.analysis.macd_signal_line) }}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Moving Averages -->
+                    <div class="col-md-6 mb-3">
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                <h6 class="card-title">Moving Averages</h6>
+                                <p class="mb-1">MA50: ${{ "%.2f"|format(analysis.analysis.ma50) }}</p>
+                                <p class="mb-1">MA200: ${{ "%.2f"|format(analysis.analysis.ma200) }}</p>
+                                {% if analysis.analysis.golden_cross %}
+                                <span class="badge bg-success">Golden Cross</span>
+                                {% elif analysis.analysis.death_cross %}
+                                <span class="badge bg-danger">Death Cross</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Trend Analysis -->
+                    <div class="col-md-6 mb-3">
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                <h6 class="card-title">Trend Analysis</h6>
+                                {% if analysis.analysis.trend == "uptrend" %}
+                                <span class="badge bg-success">Uptrend</span>
+                                {% elif analysis.analysis.trend == "downtrend" %}
+                                <span class="badge bg-danger">Downtrend</span>
+                                {% else %}
+                                <span class="badge bg-secondary">Sideways</span>
+                                {% endif %}
+                                <p class="small text-muted mb-0">
+                                    Strength: {{ analysis.analysis.trend_strength }}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Support and Resistance -->
+                <div class="mt-3">
+                    <h6 class="fw-bold">Support & Resistance Levels:</h6>
+                    <div class="row">
+                        <div class="col-6">
+                            <div class="card bg-light">
+                                <div class="card-body text-center">
+                                    <h6 class="card-title">Support</h6>
+                                    <h4>${{ "%.2f"|format(analysis.analysis.support) }}</h4>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="card bg-light">
+                                <div class="card-body text-center">
+                                    <h6 class="card-title">Resistance</h6>
+                                    <h4>${{ "%.2f"|format(analysis.analysis.resistance) }}</h4>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="bi bi-calculator display-1 text-muted"></i>
+                    <p class="mt-3">No technical analysis data available</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Performance Tracking Panel Card -->
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-graph-up me-2"></i>Performance Tracking
+                </h5>
+                <button class="btn btn-sm btn-light" data-bs-toggle="modal" data-bs-target="#recordTradeModal">
+                    <i class="bi bi-plus
+(Content truncated due to size limit. Use line ranges to read in chunks)

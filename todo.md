@@ -1,0 +1,52 @@
+# ETH Investment Script Enhancement Project
+
+## Tasks
+- [x] Read and analyze existing script
+- [x] Gather user requirements for ETH investment
+- [x] Research ETH investment strategies
+  - [x] Research short-term trading strategies for ETH
+  - [x] Research best practices for ETH investing
+  - [x] Identify ETH-specific metrics and indicators
+- [x] Research crypto API integration
+  - [x] Evaluate CoinGecko API capabilities for ETH data
+  - [x] Research alternative APIs for ETH-specific data
+  - [x] Identify APIs for gas fee tracking
+- [ ] Design improved script architecture
+  - [x] Simplify for ETH-only focus
+  - [x] Design weekly analysis workflow
+  - [x] Plan automated recommendation system
+- [x] Implement basic ETH price tracking
+  - [x] Enhance historical data collection
+  - [x] Implement ETH-specific metrics
+  - [x] Create visualization for price trends
+- [ ] Implement investment decision logic
+  - [x] Create weekly analysis function
+  - [x] Implement short-term trading signals
+  - [x] Develop automated recommendation system
+- [ ] Add risk management features
+  - [x] Implement stop-loss calculation
+  - [x] Create position sizing algorithm
+  - [x] Add portfolio exposure limits
+- [x] Implement performance tracking
+  - [x] Create profit/loss tracking
+  - [x] Implement performance metrics
+  - [x] Add historical decision evaluation
+- [x] Create user-friendly interface
+  - [x] Enhance Google Sheets integration
+  - [x] Create dashboard for key metrics
+  - [x] Simplify output for beginner users
+- [x] Test script functionality
+  - [x] Test with historical ETH data
+  - [x] Validate risk management features
+  - [x] Verify Google Sheets integration
+- [x] Document code with beginner-friendly comments
+  - [x] Add detailed function descriptions
+  - [x] Include explanations of technical indicators
+  - [x] Document risk management approach
+- [x] Create user guide for script
+  - [x] Write installation instructions
+  - [x] Create usage documentation
+  - [x] Add troubleshooting section
+- [ ] Demonstrate script to user
+- [ ] Gather feedback and make adjustments
+- [ ] Finalize and deliver complete solution

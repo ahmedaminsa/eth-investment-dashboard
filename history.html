@@ -1,0 +1,248 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-clock-history me-2"></i>Historical Analysis
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if analyses and analyses|length > 0 %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>ETH Price</th>
+                                <th>24h Change</th>
+                                <th>Recommendation</th>
+                                <th>RSI</th>
+                                <th>MACD Signal</th>
+                                <th>Trend</th>
+                                <th>Details</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for analysis in analyses %}
+                            <tr>
+                                <td>{{ analysis.timestamp|replace("T", " ")|replace("Z", "")|truncate(16, True, "") }}</td>
+                                <td>${{ "%.2f"|format(analysis.price_data.price) }}</td>
+                                <td>
+                                    {% if analysis.price_data.change_24h > 0 %}
+                                    <span class="text-success">
+                                        <i class="bi bi-arrow-up-circle-fill"></i>
+                                        +{{ "%.2f"|format(analysis.price_data.change_24h) }}%
+                                    </span>
+                                    {% else %}
+                                    <span class="text-danger">
+                                        <i class="bi bi-arrow-down-circle-fill"></i>
+                                        {{ "%.2f"|format(analysis.price_data.change_24h) }}%
+                                    </span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if analysis.recommendation.recommendation == "STRONG BUY" %}
+                                    <span class="badge bg-success">STRONG BUY</span>
+                                    {% elif analysis.recommendation.recommendation == "BUY" %}
+                                    <span class="badge bg-success">BUY</span>
+                                    {% elif analysis.recommendation.recommendation == "HOLD" %}
+                                    <span class="badge bg-warning">HOLD</span>
+                                    {% elif analysis.recommendation.recommendation == "SELL" %}
+                                    <span class="badge bg-danger">SELL</span>
+                                    {% elif analysis.recommendation.recommendation == "STRONG SELL" %}
+                                    <span class="badge bg-danger">STRONG SELL</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">{{ analysis.recommendation.recommendation }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {{ "%.1f"|format(analysis.analysis.rsi) }}
+                                    {% if analysis.analysis.rsi > 70 %}
+                                    <span class="badge bg-danger">Overbought</span>
+                                    {% elif analysis.analysis.rsi < 30 %}
+                                    <span class="badge bg-success">Oversold</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if analysis.analysis.macd_signal == "bullish" %}
+                                    <span class="badge bg-success">Bullish</span>
+                                    {% elif analysis.analysis.macd_signal == "bearish" %}
+                                    <span class="badge bg-danger">Bearish</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">Neutral</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if analysis.analysis.trend == "uptrend" %}
+                                    <span class="badge bg-success">Uptrend</span>
+                                    {% elif analysis.analysis.trend == "downtrend" %}
+                                    <span class="badge bg-danger">Downtrend</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">Sideways</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#analysisModal{{ loop.index }}">
+                                        <i class="bi bi-info-circle"></i> Details
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Analysis Detail Modals -->
+                {% for analysis in analyses %}
+                <div class="modal fade" id="analysisModal{{ loop.index }}" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Analysis Details - {{ analysis.timestamp|replace("T", " ")|replace("Z", "")|truncate(16, True, "") }}</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <h6 class="fw-bold">Price Information</h6>
+                                        <ul class="list-group mb-3">
+                                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                Price
+                                                <span>${{ "%.2f"|format(analysis.price_data.price) }}</span>
+                                            </li>
+                                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                24h Change
+                                                {% if analysis.price_data.change_24h > 0 %}
+                                                <span class="text-success">+{{ "%.2f"|format(analysis.price_data.change_24h) }}%</span>
+                                                {% else %}
+                                                <span class="text-danger">{{ "%.2f"|format(analysis.price_data.change_24h) }}%</span>
+                                                {% endif %}
+                                            </li>
+                                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                24h Volume
+                                                <span>${{ "{:,.0f}".format(analysis.price_data.volume_24h) }}</span>
+                                            </li>
+                                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                Market Cap
+                                                <span>${{ "{:,.0f}".format(analysis.price_data.market_cap) }}</span>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <h6 class="fw-bold">Technical Indicators</h6>
+                                        <ul class="list-group mb-3">
+                                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                RSI
+                                                <span>{{ "%.1f"|format(analysis.analysis.rsi) }}</span>
+                                            </li>
+                                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                MACD
+                                                <span>{{ "%.2f"|format(analysis.analysis.macd) }}</span>
+                                            </li>
+                                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                Signal Line
+                                                <span>{{ "%.2f"|format(analysis.analysis.macd_signal_line) }}</span>
+                                            </li>
+                                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                MA50
+                                                <span>${{ "%.2f"|format(analysis.analysis.ma50) }}</span>
+                                            </li>
+                                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                MA200
+                                                <span>${{ "%.2f"|format(analysis.analysis.ma200) }}</span>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-12">
+                                        <h6 class="fw-bold">Recommendation</h6>
+                                        <div class="alert {% if analysis.recommendation.recommendation in ['STRONG BUY', 'BUY'] %}alert-success{% elif analysis.recommendation.recommendation == 'HOLD' %}alert-warning{% else %}alert-danger{% endif %}">
+                                            <h5 class="alert-heading">{{ analysis.recommendation.recommendation }}</h5>
+                                            <p>{{ analysis.recommendation.action }}</p>
+                                            <hr>
+                                            <p class="mb-0">Explanations:</p>
+                                            <ul>
+                                                {% for explanation in analysis.recommendation.explanations %}
+                                                <li>{{ explanation }}</li>
+                                                {% endfor %}
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <h6 class="fw-bold">Support & Resistance</h6>
+                                        <ul class="list-group mb-3">
+                                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                Support
+                                                <span>${{ "%.2f"|format(analysis.analysis.support) }}</span>
+                                            </li>
+                                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                Resistance
+                                                <span>${{ "%.2f"|format(analysis.analysis.resistance) }}</span>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <h6 class="fw-bold">Risk Management</h6>
+                                        <ul class="list-group mb-3">
+                                            {% if analysis.risk_report and analysis.risk_report.stop_loss and analysis.risk_report.stop_loss.recommended_method %}
+                                            {% set recommended_method = analysis.risk_report.stop_loss.recommended_method %}
+                                            {% if recommended_method in analysis.risk_report.stop_loss.methods %}
+                                            {% set stop_price = analysis.risk_report.stop_loss.methods[recommended_method].stop_price %}
+                                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                Stop-Loss Price
+                                                <span>${{ "%.2f"|format(stop_price) }}</span>
+                                            </li>
+                                            {% endif %}
+                                            {% endif %}
+                                            {% if analysis.risk_report and analysis.risk_report.position_size %}
+                                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                Recommended Position
+                                                <span>{{ "%.4f"|format(analysis.risk_report.position_size.position_size_coins) }} ETH</span>
+                                            </li>
+                                            {% endif %}
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="bi bi-clock-history display-1 text-muted"></i>
+                    <p class="mt-3">No historical analysis data available</p>
+                    <button id="triggerAnalysisBtn" class="btn btn-primary mt-2">
+                        <i class="bi bi-play-circle me-2"></i>Run Analysis Now
+                    </button>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-graph-up me-2"></i>Performance History
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if analyses and analyses|length > 0 and analyses[0].performance %}
+                <div class="row mb-4">
+                    <di
+(Content truncated due to size limit. Use line ranges to read in chunks)
